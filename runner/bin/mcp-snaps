@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# mcp-snaps : convert the PNG snapshots Hyperframes just wrote into small JPEGs + one labelled grid (out/snaps/).
+set -uo pipefail
+mkdir -p out/snaps; rm -f out/snaps/*
+python3 - <<'PY'
+import glob, os, re, sys, time
+from PIL import Image
+sys.path.insert(0, "/opt/mcp"); import sheet
+pngs = [p for p in glob.glob("**/*.png", recursive=True, include_hidden=True) if "node_modules" not in p and "snap" in p.lower() and os.path.getmtime(p) > time.time() - 900]
+pngs.sort(key=lambda p: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", p)])
+items = []
+for i, p in enumerate(pngs[:24]):
+    im = Image.open(p).convert("RGB"); r = 960 / im.width; im = im.resize((960, max(1, int(im.height * r))))
+    o = f"out/snaps/s{i:02d}.jpg"; im.save(o, quality=82); m = re.findall(r"(\d+(?:\.\d+)?)s", os.path.basename(p)); items.append(f"{o}|{m[-1] + 's' if m else os.path.basename(p)[:18]}")
+if not items: print("mcp-snaps: no snapshot PNGs found"); sys.exit(1)
+sheet.make("out/snaps/grid.jpg", 2 if len(items) <= 4 else 3, 640, items); print(f"mcp-snaps: {len(items)} frames -> out/snaps/grid.jpg")
+PY

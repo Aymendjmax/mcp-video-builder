@@ -1,6 +1,6 @@
 # MCP video runner image: everything the GitHub Actions render jobs need, installed once.
 # Rebuilt automatically (image.yml) whenever packages.json or this file changes. Edit packages.json via the MCP `libs` tool.
-FROM node:22-bookworm
+FROM node:22-trixie
 ENV DEBIAN_FRONTEND=noninteractive PIP_BREAK_SYSTEM_PACKAGES=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
     NPM_CONFIG_UPDATE_NOTIFIER=false HYPERFRAMES_NO_TELEMETRY=1 HYPERFRAMES_SKIP_SKILLS=1 HYPERFRAMES_NO_UPDATE_CHECK=1 \
     NODE_PATH=/opt/mcp/node_modules HYPERFRAMES_CACHE_DIR=/opt/mcp/cache PATH=/opt/mcp/bin:$PATH
