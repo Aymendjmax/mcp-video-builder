@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# mcp-export <area> <file> [note] : upload a (big) file as a release asset of the hub and commit its manifest to <area>/<name>.asset.json
+set -euo pipefail
+: "${HUB_REPO:?}" ; area="$1"; file="$2"; note="${3:-}"
+case "$area" in raw|reference|exports|attachments) ;; *) echo "area must be raw|reference|exports|attachments"; exit 2;; esac
+name=$(basename "$file"); tag="store-$area"; asset="${area}__${name}"
+tmp=$(mktemp -d); cp "$file" "$tmp/$asset"
+gh release view "$tag" -R "$HUB_REPO" >/dev/null 2>&1 || gh release create "$tag" -R "$HUB_REPO" --title "$tag" --notes "Large files of area '$area' (managed by MCP video studio)"
+gh release upload "$tag" "$tmp/$asset" -R "$HUB_REPO" --clobber
+size=$(stat -c %s "$file"); sha=$(sha256sum "$file" | cut -d' ' -f1)
+probe=$(ffprobe -v error -show_entries format=duration:stream=width,height,r_frame_rate,codec_name -of json "$file" 2>/dev/null | jq -c '{duration:(.format.duration|tonumber? // null), streams:[.streams[]|{codec:.codec_name,w:.width,h:.height,fps:.r_frame_rate}]}' 2>/dev/null || echo null)
+HUBDIR="${HUB_DIR:-$GITHUB_WORKSPACE/hub}"; mkdir -p "$HUBDIR/$area"
+jq -n --arg n "$name" --argjson s "$size" --arg sha "$sha" --arg t "$tag" --arg a "$asset" --arg note "$note" --argjson p "${probe:-null}" --arg u "$(date -u +%FT%TZ)" \
+  '{schema:1,name:$n,size:$s,sha256:$sha,release:$t,asset:$a,note:$note,probe:$p,updated:$u}' > "$HUBDIR/$area/$name.asset.json"
+cd "$HUBDIR"; git config user.name mcp-builder; git config user.email mcp-builder@users.noreply.github.com
+git add "$area/$name.asset.json"; git commit -q -m "export: $area/$name ($size bytes)" || true
+for i in 1 2 3; do git push origin HEAD && break || { git pull --rebase -q origin "$(git rev-parse --abbrev-ref HEAD)"; sleep 2; }; done
+echo "exported $area/$name ($size bytes) -> release $tag"

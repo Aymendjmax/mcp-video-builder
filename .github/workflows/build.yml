@@ -1,0 +1,52 @@
+# Managed by MCP video studio. Runs in the PUBLIC builder repo (unlimited free minutes). No user media lives here:
+# the private hub is checked out with a secret token, and outputs are published as releases of the private hub.
+name: MCP Build
+run-name: "mcp-build ${{ inputs.id }} · ${{ inputs.project }}"
+on:
+  workflow_dispatch:
+    inputs:
+      id:        { description: "Build id", required: true, type: string }
+      project:   { description: "Folder under hub/projects/", required: true, type: string }
+      cmd:       { description: "Shell command to run", required: true, type: string }
+      artifacts: { description: "Globs of files to publish, one per line", required: false, default: "", type: string }
+      hook:      { description: "Base URL that receives live logs", required: false, default: "", type: string }
+      key:       { description: "Per-build key for the log receiver", required: false, default: "", type: string }
+      timeout:   { description: "Timeout in minutes", required: false, default: "30", type: string }
+      hub:       { description: "owner/repo of the private hub", required: true, type: string }
+      image:     { description: "Runner image", required: false, default: "ghcr.io/aymendjmax/mcp-video-runner:latest", type: string }
+      prep:      { description: "Run mcp-prep first (vendor libs, fonts, big media)", required: false, default: "1", type: string }
+permissions:
+  contents: read
+  packages: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeout) }}
+    container:
+      image: ${{ inputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Mask key
+        env:
+          BUILD_KEY: ${{ inputs.key }}
+        run: '[ -z "$BUILD_KEY" ] || echo "::add-mask::$BUILD_KEY"'
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.hub }}
+          token: ${{ secrets.HUB_TOKEN }}
+          path: hub
+      - name: Build
+        env:
+          BUILD_ID: ${{ inputs.id }}
+          BUILD_PROJECT: ${{ inputs.project }}
+          BUILD_CMD: ${{ inputs.cmd }}
+          BUILD_ARTIFACTS: ${{ inputs.artifacts }}
+          BUILD_HOOK: ${{ inputs.hook }}
+          BUILD_KEY: ${{ inputs.key }}
+          BUILD_PREP: ${{ inputs.prep }}
+          HUB_REPO: ${{ inputs.hub }}
+          HUB_TOKEN: ${{ secrets.HUB_TOKEN }}
+        run: bash runner/run.sh

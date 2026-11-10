@@ -1,0 +1,38 @@
+{
+  "_doc": "Source of truth for the prebuilt GitHub Actions runner image. Edit through the MCP `libs` tool (it commits here and the image rebuilds automatically). Every entry is pinned; nothing is installed without a version.",
+  "apt": ["ffmpeg", "chromium", "fonts-liberation", "fonts-noto-core", "fonts-noto-color-emoji", "python3-pip", "python3-venv", "python3-dev", "zip", "unzip", "jq", "curl", "rsync", "git", "gh", "imagemagick", "sox"],
+  "npm": {
+    "hyperframes": "0.9.23",
+    "remotion": "4.0.539",
+    "@remotion/cli": "4.0.539",
+    "@remotion/renderer": "4.0.539",
+    "@remotion/bundler": "4.0.539",
+    "@remotion/captions": "4.0.539",
+    "@remotion/media-utils": "4.0.539",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "puppeteer-core": "25.16.0",
+    "gsap": "3.15.0",
+    "three": "0.186.1",
+    "animejs": "4.5.0",
+    "lottie-web": "5.13.0",
+    "d3": "7.9.0",
+    "sharp": "0.35.5",
+    "svgo": "4.1.0"
+  },
+  "pip": {
+    "pillow": "13.0.0",
+    "numpy": "2.5.4",
+    "opencv-python-headless": "4.14.0.94",
+    "imageio": "2.38.1",
+    "yt-dlp": "2026.10.26"
+  },
+  "fonts": {
+    "@fontsource/cairo": "5.3.0",
+    "@fontsource/tajawal": "5.3.0",
+    "@fontsource/noto-sans-arabic": "5.3.0",
+    "@fontsource/poppins": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0"
+  }
+}

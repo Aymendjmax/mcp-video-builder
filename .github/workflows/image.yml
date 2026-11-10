@@ -1,0 +1,27 @@
+# Builds the prebuilt runner image (ghcr.io/<owner>/mcp-video-runner) when the package list or scripts change.
+name: Runner image
+on:
+  push:
+    paths: ["runner/Dockerfile", "runner/packages.json", "runner/bin/**", "runner/qa.py", "runner/sheet.py", ".github/workflows/image.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: runner
+          push: true
+          tags: ghcr.io/${{ env.OWNER }}/mcp-video-runner:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

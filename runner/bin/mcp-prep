@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# mcp-prep [project_dir]  : make a project render-ready: local vendor libs + local fonts, and materialise big media (asset manifests).
+set -euo pipefail
+D="${1:-.}"; cd "$D"
+mkdir -p vendor/fonts
+for f in /opt/mcp/vendor/*; do [ -e "vendor/$(basename "$f")" ] || cp "$f" vendor/; done
+cp -n /opt/mcp/fonts/* vendor/fonts/ 2>/dev/null || true
+if [ -n "${HUB_REPO:-}" ]; then mcp-fetch . || echo "mcp-fetch: some assets could not be downloaded"; fi
+echo "mcp-prep: ok ($(ls vendor | wc -l) vendor files, $(ls vendor/fonts | wc -l) font files)"

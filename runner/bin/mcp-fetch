@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# mcp-fetch <dir|*.asset.json>... : replace asset manifests (big media stored as release assets in the hub) with the real files, next to the manifest.
+set -uo pipefail
+: "${HUB_REPO:?HUB_REPO not set}"
+one() {
+  local m="$1" out tag asset d
+  out="${m%.asset.json}"; [ -s "$out" ] && return 0
+  tag=$(jq -r .release "$m"); asset=$(jq -r .asset "$m"); d=$(dirname "$m")
+  echo "mcp-fetch: $out <- release $tag / $asset"
+  local tmp; tmp=$(mktemp -d)
+  gh release download "$tag" -R "$HUB_REPO" -p "$asset" -D "$tmp" --clobber && mv "$tmp/$asset" "$out"; local rc=$?
+  rm -rf "$tmp"; return $rc
+}
+rc=0
+for a in "$@"; do
+  if [ -d "$a" ]; then while IFS= read -r m; do one "$m" || rc=1; done < <(find "$a" -name '*.asset.json' -not -path '*/node_modules/*')
+  else one "$a" || rc=1; fi
+done
+exit $rc
